@@ -1,0 +1,209 @@
+﻿@model AuthPageViewModel
+@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Acente Girişi";
+    var screen = Model.Screen;
+    var isTab = screen is "login" or "mobile";
+    var returnUrl = ViewData["ReturnUrl"];
+    string Off(string name) => screen == name ? "" : "is-off";
+    string On(string name) => screen == name ? "is-on" : "";
+}
+
+<div class="login-stage">
+    <div class="login-box">
+        <section class="login-hero">
+            <div>
+                <img class="logo-img is-light" src="~/img/logo.png" alt="Türk Nippon Sigorta" />
+                <img class="logo-img is-dark" src="~/img/logo-dark.png" alt="" />
+                <span>Hoş geldiniz,</span>
+                <h2>Galaksi Acente Portalı</h2>
+                <p>Teklif, poliçe ve hasar işlemlerinize tek yerden ulaşın.</p>
+            </div>
+            <div class="hero-slogan">Daha güçlü yarınlar için<br />birlikte...</div>
+            <img class="login-swirl" src="~/img/logo-icon.png" alt="" />
+        </section>
+
+        <div class="login-form">
+            <h1 class="visually-hidden">Acente girişi</h1>
+
+            <div class="auth-tabs @(isTab ? "" : "is-off")" role="tablist" aria-label="Acente girişi">
+                <button type="button" role="tab" aria-controls="panel-login" class="@On("login")" data-tab="login"
+                        aria-selected="@(screen == "login" ? "true" : "false")">
+                    Giriş yap
+                </button>
+                <button type="button" role="tab" aria-controls="panel-mobile" class="@On("mobile")" data-tab="mobile"
+                        aria-selected="@(screen == "mobile" ? "true" : "false")">
+                    Mobil oturum
+                </button>
+            </div>
+
+            <!-- GİRİŞ YAP -->
+            <form id="panel-login" class="auth-panel @Off("login")" role="tabpanel"
+                  method="post" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" novalidate>
+                <p class="lead">Kullanıcı adınız ve şifrenizle oturum açın.</p>
+
+                <div asp-validation-summary="ModelOnly" class="form-msg"></div>
+
+                <div class="field">
+                    <label asp-for="Login.UserName">Kullanıcı adı</label>
+                    <input asp-for="Login.UserName" autocomplete="username" autofocus />
+                    <span asp-validation-for="Login.UserName" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Login.Password">Şifre</label>
+                    <input asp-for="Login.Password" type="password" autocomplete="current-password" />
+                    <button class="eye" type="button" data-eye="Login_Password" aria-label="Şifreyi göster">Göster</button>
+                    <span asp-validation-for="Login.Password" class="field-error"></span>
+                </div>
+
+                <button class="btn btn-primary btn-block" type="submit">Giriş yap</button>
+                <div class="forgot">
+                    <a asp-controller="Account" asp-action="Login" asp-route-screen="forgot" asp-route-returnUrl="@returnUrl" data-go="forgot">Şifremi unuttum</a>
+                </div>
+            </form>
+
+            <!-- MOBİL OTURUM -->
+            <form id="panel-mobile" class="auth-panel @Off("mobile")" role="tabpanel"
+                  method="post" asp-controller="Account" asp-action="MobileLogin" asp-route-returnUrl="@returnUrl" novalidate>
+                <p class="lead">Mobil oturum için kullanıcı adınız ve şifrenizle giriş yapın.</p>
+
+                <div asp-validation-summary="ModelOnly" class="form-msg"></div>
+
+                <div class="field">
+                    <label asp-for="MobileLogin.UserName">Kullanıcı adı</label>
+                    <input asp-for="MobileLogin.UserName" autocomplete="username" />
+                    <span asp-validation-for="MobileLogin.UserName" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="MobileLogin.Password">Şifre</label>
+                    <input asp-for="MobileLogin.Password" type="password" autocomplete="current-password" />
+                    <button class="eye" type="button" data-eye="MobileLogin_Password" aria-label="Şifreyi göster">Göster</button>
+                    <span asp-validation-for="MobileLogin.Password" class="field-error"></span>
+                </div>
+
+                <button class="btn btn-primary btn-block" type="submit">Giriş yap</button>
+                <div class="forgot">
+                    <a asp-controller="Account" asp-action="Login" asp-route-screen="code" asp-route-returnUrl="@returnUrl" data-go="code">Güvenlik kodu yenileme</a>
+                </div>
+            </form>
+
+            <!-- ŞİFREMİ UNUTTUM -->
+            <div id="panel-forgot" class="auth-panel @Off("forgot")">
+                <a class="back-link" asp-controller="Account" asp-action="Login" asp-route-screen="login" asp-route-returnUrl="@returnUrl" data-go="login">‹ Girişe dön</a>
+                <h2 class="panel-title">Şifremi unuttum</h2>
+                <p class="lead">Kullanıcı adınızı ve kayıtlı cep telefonu numaranızı girin.</p>
+
+                @if (screen == "forgot" && Model.Done is not null)
+                {
+                    <div class="flash" role="status">@Model.Done</div>
+                }
+                else
+                {
+                    <form method="post" asp-controller="Account" asp-action="Forgot" novalidate>
+                        <div class="field">
+                            <label asp-for="Forgot.UserName">Kullanıcı adı</label>
+                            <input asp-for="Forgot.UserName" autocomplete="username" />
+                            <span asp-validation-for="Forgot.UserName" class="field-error"></span>
+                        </div>
+                        <div class="field">
+                            <label asp-for="Forgot.Phone">Cep telefonu</label>
+                            <input asp-for="Forgot.Phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="05XX XXX XX XX" />
+                            <span asp-validation-for="Forgot.Phone" class="field-error"></span>
+                        </div>
+                        <button class="btn btn-primary btn-block" type="submit">Şifre yenileme bağlantısı gönder</button>
+                    </form>
+                }
+            </div>
+
+            <!-- GÜVENLİK KODU YENİLEME -->
+            <div id="panel-code" class="auth-panel @Off("code")">
+                <a class="back-link" asp-controller="Account" asp-action="Login" asp-route-screen="mobile" asp-route-returnUrl="@returnUrl" data-go="mobile">‹ Mobil oturuma dön</a>
+                <h2 class="panel-title">Güvenlik kodu yenileme</h2>
+                <p class="lead">Kullanıcı adınızı ve kayıtlı cep telefonu numaranızı girin.</p>
+
+                @if (screen == "code" && Model.Done is not null)
+                {
+                    <div class="flash" role="status">@Model.Done</div>
+                }
+                else
+                {
+                    <form method="post" asp-controller="Account" asp-action="RefreshCode" novalidate>
+                        <div class="field">
+                            <label asp-for="Code.UserName">Kullanıcı adı</label>
+                            <input asp-for="Code.UserName" autocomplete="username" />
+                            <span asp-validation-for="Code.UserName" class="field-error"></span>
+                        </div>
+                        <div class="field">
+                            <label asp-for="Code.Phone">Cep telefonu</label>
+                            <input asp-for="Code.Phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="05XX XXX XX XX" />
+                            <span asp-validation-for="Code.Phone" class="field-error"></span>
+                        </div>
+                        <button class="btn btn-primary btn-block" type="submit">Yeni kod gönder</button>
+                    </form>
+                }
+            </div>
+
+            <div class="login-ssl">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+                SSL ile korunan bağlantı · GlobalSign
+            </div>
+        </div>
+    </div>
+
+    <div class="bubbles" aria-hidden="true">
+        <i style="--x:3%;--y:10px;--s:44px;--c:var(--logo-blue);--d:-1s"></i>
+        <i style="--x:10%;--y:64px;--s:18px;--c:var(--logo-yellow);--d:-3s"></i>
+        <i style="--x:17%;--y:22px;--s:28px;--c:var(--logo-green);--d:-5s"></i>
+        <i style="--x:27%;--y:58px;--s:12px;--c:var(--logo-blue);--d:-2s"></i>
+        <i style="--x:38%;--y:6px;--s:20px;--c:var(--logo-yellow);--d:-4s"></i>
+        <i style="--x:50%;--y:40px;--s:38px;--c:var(--logo-green);--d:-6s"></i>
+        <i style="--x:61%;--y:10px;--s:14px;--c:var(--logo-blue);--d:-1.5s"></i>
+        <i style="--x:68%;--y:62px;--s:24px;--c:var(--logo-yellow);--d:-3.5s"></i>
+        <i style="--x:77%;--y:18px;--s:34px;--c:var(--logo-blue);--d:-5.5s"></i>
+        <i style="--x:86%;--y:56px;--s:16px;--c:var(--logo-green);--d:-2.5s"></i>
+        <i style="--x:92%;--y:8px;--s:48px;--c:var(--logo-yellow);--d:-4.5s"></i>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var names = ['login', 'mobile', 'forgot', 'code'];
+            var tabs = document.querySelectorAll('.auth-tabs [data-tab]');
+            var tabBar = document.querySelector('.auth-tabs');
+
+            function show(name) {
+                names.forEach(function (n) {
+                    document.getElementById('panel-' + n).classList.toggle('is-off', n !== name);
+                });
+                var isTab = name === 'login' || name === 'mobile';
+                tabBar.classList.toggle('is-off', !isTab);
+                tabs.forEach(function (t) {
+                    var on = t.getAttribute('data-tab') === name;
+                    t.classList.toggle('is-on', on);
+                    t.setAttribute('aria-selected', on ? 'true' : 'false');
+                });
+            }
+
+            tabs.forEach(function (t) {
+                t.addEventListener('click', function () { show(t.getAttribute('data-tab')); });
+            });
+            document.querySelectorAll('[data-go]').forEach(function (a) {
+                a.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    show(a.getAttribute('data-go'));
+                });
+            });
+
+            document.querySelectorAll('[data-eye]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var input = document.getElementById(b.getAttribute('data-eye'));
+                    var showIt = input.type === 'password';
+                    input.type = showIt ? 'text' : 'password';
+                    b.textContent = showIt ? 'Gizle' : 'Göster';
+                    b.setAttribute('aria-label', showIt ? 'Şifreyi gizle' : 'Şifreyi göster');
+                });
+            });
+        })();
+    </script>
+}

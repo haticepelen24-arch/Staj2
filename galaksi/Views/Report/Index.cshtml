@@ -1,0 +1,13 @@
+﻿@model IReadOnlyList<ReportItem>
+@{ ViewData["Title"] = "Rapor Merkezi"; ViewData["Nav"] = "rapor"; }
+<h1 class="page-title">Rapor merkezi</h1>
+<p class="page-sub">Çapraz satış, müşteri ve üretim raporlarına ulaşın.</p>
+
+<div class="tiles">
+    @foreach (var r in Model)
+    {
+        <a class="tile" asp-action="Detail" asp-route-id="@r.Id">
+            <div class="ic">@r.Icon</div><b>@r.Title</b><span>@r.Description</span>
+        </a>
+    }
+</div>

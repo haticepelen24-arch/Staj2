@@ -1,0 +1,308 @@
+﻿[hidden] {
+    display: none !important;
+}
+
+/* Ürün seçimi */
+.ptiles {
+    border: 0;
+    padding: 0;
+    margin: 0 0 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.ptile {
+    position: relative;
+    cursor: pointer;
+}
+
+    .ptile input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+.pbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    transition: border-color .15s, background .15s, box-shadow .15s;
+}
+
+.pico {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.ptile:hover .pbox {
+    border-color: var(--brand);
+}
+
+.ptile input:checked + .pbox {
+    border-color: var(--brand);
+    background: var(--soft);
+    box-shadow: 0 0 0 2px var(--brand) inset;
+}
+
+.ptile input:focus-visible + .pbox {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.start-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.hint {
+    color: var(--mute);
+    font-size: 12px;
+}
+
+.linkbtn {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--brand);
+    cursor: pointer;
+}
+
+/* Son teklifler: satırın tamamı tıklanır */
+#open-table tbody tr {
+    position: relative;
+    cursor: pointer;
+}
+
+    #open-table tbody tr:hover {
+        background: var(--soft);
+    }
+
+.rowlink {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+    .rowlink:hover {
+        text-decoration: none;
+    }
+
+    .rowlink::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+    }
+
+.go {
+    color: var(--brand);
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Sihirbaz */
+.wiz-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+    .wiz-head .page-title {
+        margin: 0;
+    }
+
+.muted {
+    color: var(--mute);
+    font-size: 13px;
+}
+
+.stepper {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+    .stepper li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px 8px 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--card);
+        color: var(--mute);
+        font-size: 13px;
+    }
+
+    .stepper .n {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--soft);
+        color: var(--mute);
+        font-weight: 700;
+        font-size: 12px;
+    }
+
+    .stepper .current {
+        border-color: var(--brand);
+        color: var(--ink);
+        font-weight: 600;
+    }
+
+        .stepper .current .n {
+            background: var(--brand);
+            color: #fff;
+        }
+
+    .stepper .done .n {
+        background: var(--up);
+        color: #fff;
+        font-size: 0;
+    }
+
+        .stepper .done .n::before {
+            content: "✓";
+            font-size: 12px;
+        }
+
+.qgrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 16px;
+    margin-bottom: 8px;
+}
+
+    .qgrid .field {
+        margin-bottom: 14px;
+    }
+
+    .qgrid .lbl {
+        display: block;
+        font-weight: 600;
+        font-size: 13px;
+        margin: 0 0 6px;
+    }
+
+.field .hint {
+    display: block;
+    margin-top: 4px;
+}
+
+.field.has-error input, .field.has-error select {
+    border-color: var(--err);
+}
+
+.seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+    .seg label {
+        position: relative;
+        margin: 0;
+    }
+
+    .seg input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .seg span {
+        display: block;
+        padding: 10px 22px;
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--mute);
+        background: var(--field);
+    }
+
+    .seg input:checked + span {
+        background: var(--brand);
+        color: #fff;
+    }
+
+    .seg input:focus-visible + span {
+        outline: 2px solid var(--brand);
+        outline-offset: -2px;
+    }
+
+/* Enter tuşu ilk düğmeyi (İleri) tetikler; ekranda sıra tersine çevrilir */
+.wiz-actions {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+    .wiz-actions form {
+        margin: 0;
+    }
+
+/* Prim ekranı */
+.premium-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: var(--gap);
+    align-items: start;
+}
+
+.premium .amount {
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--brand);
+    line-height: 1.1;
+    margin: 6px 0 10px;
+}
+
+.sum-title {
+    margin: 14px 0 6px;
+    font-size: 13px;
+    color: var(--mute);
+    font-weight: 600;
+}
+
+.sum {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    margin: 0;
+}
+
+    .sum dt {
+        color: var(--mute);
+        font-size: 13px;
+    }
+
+    .sum dd {
+        margin: 0;
+        font-weight: 600;
+        text-align: right;
+    }
+
+@media (max-width: 900px) {
+    .premium-grid, .qgrid {
+        grid-template-columns: 1fr;
+    }
+}

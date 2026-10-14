@@ -1,0 +1,28 @@
+﻿@model IReadOnlyList<CustomerItem>
+@{ ViewData["Title"] = "Müşteri İşlemleri"; ViewData["Nav"] = ""; var q = ViewData["Q"] as string; }
+<h1 class="page-title">Müşteri işlemleri</h1>
+<p class="page-sub">Müşteri listesi ve iletişim bilgileri.</p>
+
+<form class="toolbar" method="get">
+    <input type="search" name="q" value="@q" placeholder="Ad, şehir veya telefon" aria-label="Ara" />
+    <button class="btn btn-primary" type="submit">Ara</button>
+    <a class="btn" asp-action="Index">Temizle</a>
+</form>
+
+<section class="card">
+    @if (Model.Count == 0) { <div class="empty">Kayıt bulunamadı.</div> }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Müşteri</th><th>Telefon</th><th>Şehir</th><th class="num">Poliçe sayısı</th></tr></thead>
+                <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr><td>@c.Name</td><td>@c.Phone</td><td>@c.City</td><td class="num">@c.PolicyCount</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

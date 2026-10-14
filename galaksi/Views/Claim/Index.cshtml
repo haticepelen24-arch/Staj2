@@ -1,0 +1,57 @@
+﻿@model IReadOnlyList<ClaimItem>
+@{
+    ViewData["Title"] = "Hasar Sorgulama";
+    ViewData["Nav"] = "";
+    var q = ViewData["Q"] as string;
+    var status = ViewData["Status"] as string;
+    var statuses = new[] { "İncelemede", "Ödendi", "Kapandı", "Reddedildi" };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/claim.css" asp-append-version="true" />
+}
+
+<h1 class="page-title">Hasar sorgulama</h1>
+<p class="page-sub">Hasar dosya durumlarını sorgulayın veya yeni hasar bildirin.</p>
+
+<form class="toolbar" method="get">
+    <input type="search" name="q" value="@q" placeholder="Dosya no, poliçe no veya müşteri" aria-label="Ara" />
+    <select name="status" aria-label="Durum">
+        <option value="">Tüm durumlar</option>
+        @foreach (var s in statuses)
+        {
+            <option value="@s" selected="@(s == status)">@s</option>
+        }
+    </select>
+    <button class="btn btn-primary" type="submit">Ara</button>
+    <a class="btn" asp-action="Index">Temizle</a>
+    <a class="btn btn-primary spacer" asp-action="Create">+ Yeni hasar bildirimi</a>
+</form>
+
+<section class="card">
+    @if (Model.Count == 0)
+    {
+        <div class="empty">Kayıt bulunamadı.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Dosya no</th><th>Poliçe no</th><th>Müşteri</th><th>Tür</th><th>Hasar tarihi</th><th class="num">Tutar</th><th>Durum</th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr class="click">
+                            <td><a class="rowlink" asp-action="Details" asp-route-id="@c.FileNo">@c.FileNo</a></td>
+                            <td>@c.PolicyNo</td>
+                            <td>@c.Customer</td>
+                            <td>@(string.IsNullOrEmpty(c.Type) ? "—" : c.Type)</td>
+                            <td>@UiHelpers.Day(c.Date)</td>
+                            <td class="num">@(c.Amount > 0 ? UiHelpers.Money(c.Amount) : "—")</td>
+                            <td><span class="badge @UiHelpers.Badge(c.Status)">@c.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

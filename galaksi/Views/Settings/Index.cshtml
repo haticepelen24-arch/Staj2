@@ -1,0 +1,26 @@
+﻿@{ ViewData["Title"] = "Ayarlar"; ViewData["Nav"] = ""; }
+<h1 class="page-title">Ayarlar</h1>
+<p class="page-sub">Görünüm tercihlerinizi seçin.</p>
+
+<section class="card">
+    <h2 class="card-title">Tema</h2>
+    <div class="toolbar">
+        <button class="btn" type="button" data-theme-set="">Sistem</button>
+        <button class="btn" type="button" data-theme-set="light">Açık</button>
+        <button class="btn" type="button" data-theme-set="dark">Koyu</button>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+            b.onclick = function () {
+                var v = b.getAttribute('data-theme-set');
+                try {
+                    if (v) { localStorage.setItem('theme', v); document.documentElement.setAttribute('data-theme', v); }
+                    else { localStorage.removeItem('theme'); document.documentElement.removeAttribute('data-theme'); }
+                } catch (e) { }
+            };
+        });
+    </script>
+}

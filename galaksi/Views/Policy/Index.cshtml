@@ -1,0 +1,46 @@
+﻿@model IReadOnlyList<PolicyItem>
+@{
+    ViewData["Title"] = "Poliçe Sorgulama"; ViewData["Nav"] = "";
+    var q = ViewData["Q"] as string; var type = ViewData["Type"] as string;
+}
+<h1 class="page-title">Poliçe sorgulama</h1>
+<p class="page-sub">Poliçe numarası veya müşteri adıyla arayın.</p>
+
+<form class="toolbar" method="get">
+    <input type="search" name="q" value="@q" placeholder="Poliçe no veya müşteri" aria-label="Ara" />
+    <select name="type" aria-label="Ürün">
+        <option value="">Tüm ürünler</option>
+        @foreach (var p in QuoteForm.Products.Append("Diğer"))
+        {
+            <option value="@p" selected="@(p == type)">@p</option>
+        }
+    </select>
+    <button class="btn btn-primary" type="submit">Ara</button>
+    <a class="btn" asp-action="Index">Temizle</a>
+</form>
+
+<section class="card">
+    @if (Model.Count == 0) { <div class="empty">Kayıt bulunamadı.</div> }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Poliçe no</th><th>Müşteri</th><th>Ürün</th><th>Başlangıç</th><th>Bitiş</th><th class="num">Prim</th><th>Durum</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>@p.No</td><td>@p.Customer</td><td>@p.Type</td>
+                        <td>@UiHelpers.Day(p.Start)</td><td>@UiHelpers.Day(p.End)</td>
+                        <td class="num">@UiHelpers.Money(p.Premium)</td>
+                            <td>@if (p.Status == "Aktif") {
+                                <a asp-controller="Claim" asp-action="Create" asp-route-policy="@p.No">Hasar bildir</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

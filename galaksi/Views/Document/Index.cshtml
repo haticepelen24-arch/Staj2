@@ -1,0 +1,38 @@
+﻿@model IReadOnlyList<DocumentItem>
+@{
+    ViewData["Title"] = "Doküman Merkezi"; ViewData["Nav"] = "dokuman";
+    var cat = ViewData["Category"] as string;
+    var cats = new[] { "Formlar", "Ürün Kılavuzları", "Mevzuat", "Eğitim" };
+}
+<h1 class="page-title">Doküman merkezi</h1>
+<p class="page-sub">Form, kılavuz ve mevzuat dokümanlarına buradan ulaşın.</p>
+
+<div class="toolbar">
+    <a class="btn @(string.IsNullOrEmpty(cat) ? "btn-primary" : "")" asp-action="Index">Tümü</a>
+    @foreach (var c in cats)
+    {
+        <a class="btn @(cat == c ? "btn-primary" : "")" asp-action="Index" asp-route-category="@c">@c</a>
+    }
+</div>
+
+<section class="card">
+    @if (Model.Count == 0) { <div class="empty">Doküman bulunamadı.</div> }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Doküman</th><th>Kategori</th><th>Biçim</th><th>Boyut</th><th>Tarih</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td>@d.Title</td><td>@d.Category</td><td>@d.Format</td><td>@d.Size</td>
+                        <td>@UiHelpers.Day(d.Date)</td>
+                        <td><a href="#" title="Örnek veri: indirme gerçek servis bağlanınca eklenecek">İndir</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

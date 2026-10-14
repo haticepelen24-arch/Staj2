@@ -1,0 +1,335 @@
+﻿@model DashboardViewModel
+@{
+    ViewData["Title"] = "Ana Panel";
+    ViewData["Nav"] = "jet";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var userKey = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anon";
+
+    // Poliçe dağılımı
+    var slices = new List<(PolicyType P, int Pct, string Dash, string Offset)>();
+    double cum = 0;
+    foreach (var p in Model.PolicyTypes)
+    {
+        double pct = Model.TotalPolicies == 0 ? 0 : p.Count * 100.0 / Model.TotalPolicies;
+        slices.Add((p, (int)Math.Round(pct),
+            pct.ToString("0.##", inv) + " " + (100 - pct).ToString("0.##", inv),
+            (-cum).ToString("0.##", inv)));
+        cum += pct;
+    }
+
+    // Acente sıralaması
+    var r = Model.Ranking;
+    var rankMove = r.PreviousRank - r.Rank;
+    var diff = (r.Policies - r.AveragePolicies) * 100.0 / r.AveragePolicies;
+    var topMax = Math.Max(r.Policies, r.AveragePolicies);
+    var mePct = (int)(r.Policies * 100.0 / topMax);
+    var avgPct = (int)(r.AveragePolicies * 100.0 / topMax);
+
+    // Aylık üretim
+    var months = Model.Months;
+    var maxP = months.Max(m => m.Policies);
+    var lastM = months[^1];
+    var prevM = months[^2];
+    var monthChg = (lastM.Policies - prevM.Policies) * 100.0 / prevM.Policies;
+
+    var cs = Model.CrossSell;
+
+    var kpiIcons = new[] { ("i-up", "green"), ("i-up", "blue"), ("i-down", "red"), ("i-cal", "purple") };
+    var newsIcons = new[] { ("i-news", "blue"), ("i-file", "purple"), ("i-info", "green"), ("i-cal", "blue") };
+    var info = new[]
+    {
+        new { Title = "Teklif / poliçe rehberi", Text = "Teklif ve poliçe işlemlerini adım adım öğrenin.", Icon = "i-shield", Color = "blue" },
+        new { Title = "Sıkça sorulan sorular", Text = "Merak ettiğiniz soruların cevapları burada.", Icon = "i-help", Color = "green" },
+        new { Title = "Kullanım kılavuzu", Text = "Sistem kullanımına dair tüm dokümanlar.", Icon = "i-book", Color = "green" },
+        new { Title = "Destek", Text = "Her türlü sorunuz için destek ekibimizle iletişime geçin.", Icon = "i-headset", Color = "blue" },
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+}
+
+<div id="dash" data-user="@userKey">
+    <div class="dash-tools">
+        <span>Kartları başlıklarındaki ⋮⋮ simgesinden sürükleyerek yer değiştirebilirsiniz.</span>
+        <button type="button" class="linkbtn" id="dash-reset" hidden>Düzeni sıfırla</button>
+    </div>
+
+    <div class="dash-grid">
+        <!-- Günün işlemleri -->
+        <div class="slot">
+            <section class="card" data-card="kpi">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-cal" /></svg>Günün işlemleri</span>
+                    <span class="date">@DateTime.Now.ToString("d MMMM yyyy", tr)</span>
+                </h2>
+                <div class="kpis">
+                    @for (int i = 0; i < Model.Kpis.Count; i++)
+                    {
+                        var k = Model.Kpis[i];
+                        var (icon, color) = kpiIcons[i % kpiIcons.Length];
+                        <div class="kpi">
+                            <span class="chip round @color"><svg class="ico"><use href="#@icon" /></svg></span>
+                            <div class="body">
+                                <span>@k.Label</span>
+                                <b>@k.Value</b>
+                                <small class="@(k.Up ? "up" : "down")">%@(k.Up ? "+" : "-")@k.Change.TrimStart('%')</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <!-- Poliçe dağılımı -->
+        <div class="slot">
+            <section class="card" data-card="dist">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-pie" /></svg>Poliçe dağılımı</span>
+                    <a asp-controller="Policy" asp-action="Index">Tümünü gör ›</a>
+                </h2>
+                <div class="donut-wrap">
+                    <svg class="donut" id="donut" viewBox="0 0 120 120" role="group" aria-label="Poliçe dağılımı">
+                        <g transform="rotate(-90 60 60)" fill="none" stroke-width="16">
+                            @for (int i = 0; i < slices.Count; i++)
+                            {
+                                var s = slices[i];
+                                <a class="slice" href="@Url.Action("Index", "Policy", new { type = s.P.Name })"
+                                   data-name="@s.P.Name" data-count="@s.P.Count" data-pct="@s.Pct"
+                                   aria-label="@s.P.Name: @s.P.Count poliçe, yüzde @s.Pct">
+                                    <title>@s.P.Name: @s.P.Count poliçe (%@s.Pct)</title>
+                                    <circle cx="60" cy="60" r="42" pathLength="100" stroke="@s.P.Color" stroke-dasharray="@s.Dash" stroke-dashoffset="@s.Offset" />
+                                </a>
+                            }
+                        </g>
+                        <text id="d-label" x="60" y="55" text-anchor="middle" font-size="8" opacity=".7">Toplam poliçe</text>
+                        <text id="d-value" x="60" y="72" text-anchor="middle" font-size="17" font-weight="700">@Model.TotalPolicies.ToString("N0", tr)</text>
+                    </svg>
+                    <ul class="legend">
+                        @foreach (var s in slices)
+                        {
+                            <li>
+                                <a asp-controller="Policy" asp-action="Index" asp-route-type="@s.P.Name">
+                                    <i style="background:@s.P.Color"></i>
+                                    <span>@s.P.Name</span>
+                                    <span class="pct">%@s.Pct</span>
+                                    <b>@s.P.Count</b>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- Acente sıralaması -->
+        <div class="slot">
+            <section class="card" data-card="rank">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-trophy" /></svg>Acente sıralaması</span>
+                    <span class="date">@r.Period</span>
+                </h2>
+                <div class="rank-hero">
+                    <div class="rank-num">@r.Rank<small>. sıra</small></div>
+                    <div class="rank-meta">
+                        <span>@r.TotalAgencies acente içinde</span>
+                        @if (rankMove > 0)
+                        {
+                            <span class="delta up">▲ @rankMove sıra yükseldi</span>
+                        }
+                        else if (rankMove < 0)
+                        {
+                            <span class="delta down">▼ @(-rankMove) sıra düştü</span>
+                        }
+                        else
+                        {
+                            <span class="delta">Sıralamanız değişmedi</span>
+                        }
+                    </div>
+                </div>
+                <div class="compare">
+                    <div class="crow"><span>Siz</span><div class="cbar"><i style="width:@(mePct)%"></i></div><b>@r.Policies.ToString("N0", tr)</b></div>
+                    <div class="crow"><span>Ortalama</span><div class="cbar avg"><i style="width:@(avgPct)%"></i></div><b>@r.AveragePolicies.ToString("N0", tr)</b></div>
+                </div>
+                <p class="rank-note">
+                    Üretiminiz acente ortalamasının
+                    <b class="@(diff >= 0 ? "up" : "down")">%@Math.Abs(diff).ToString("0.0", tr) @(diff >= 0 ? "üzerinde" : "altında")</b>.
+                </p>
+                <ol class="toplist">
+                    @{
+                        var prevRank = 0;
+                    }
+                    @foreach (var row in r.Top)
+                    {
+                        if (row.IsMe && row.Rank - prevRank > 1)
+                        {
+                            <li class="gap" aria-hidden="true">⋯</li>
+                        }
+                        <li class="@(row.IsMe ? "me" : "")">
+                            <span class="pos">@row.Rank</span>
+                            <span>@row.Agency</span>
+                            <b>@row.Policies.ToString("N0", tr)</b>
+                        </li>
+                        prevRank = row.Rank;
+                    }
+                </ol>
+            </section>
+        </div>
+    </div>
+
+    <div class="dash-mid">
+        <!-- Aylık üretim -->
+        <div class="slot">
+            <section class="card" data-card="monthly">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-chart" /></svg>Aylık üretim</span>
+                    <a asp-controller="Report" asp-action="Detail" asp-route-id="uretim">Raporu gör ›</a>
+                </h2>
+                <div class="mini-stats">
+                    <div><span>@lastM.Month ayı</span><b>@lastM.Policies.ToString("N0", tr) poliçe</b></div>
+                    <div><span>Prim</span><b>@UiHelpers.Money(lastM.Premium)</b></div>
+                    <div>
+                        <span>Önceki aya göre</span>
+                        <b class="@(monthChg >= 0 ? "up" : "down")">@(monthChg >= 0 ? "▲" : "▼") %@Math.Abs(monthChg).ToString("0.0", tr)</b>
+                    </div>
+                </div>
+                <div class="bars" role="img" aria-label="Son altı ayın poliçe üretimi">
+                    @foreach (var m in months)
+                    {
+                        var px = (int)(m.Policies * 140.0 / maxP);
+                        <div class="bcol @(m == lastM ? "now" : "")" title="@m.Month: @m.Policies poliçe, @UiHelpers.Money(m.Premium)">
+                            <span class="bval">@m.Policies.ToString("N0", tr)</span>
+                            <div class="bbar" style="height:@(px)px"></div>
+                            <span class="blabel">@m.Month</span>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <!-- Çapraz satış -->
+        <div class="slot">
+            <section class="card" data-card="cross">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-layers" /></svg>Çapraz satış</span>
+                    <a asp-controller="Report" asp-action="Detail" asp-route-id="capraz-satis">Raporu gör ›</a>
+                </h2>
+                <div class="xs-hero">
+                    <b>@cs.AveragePerCustomer.ToString("0.0", tr)</b>
+                    <span>müşteri başına ürün</span>
+                    <small class="@(cs.AveragePerCustomer >= cs.AgencyAverage ? "up" : "down")">Acente ortalaması @cs.AgencyAverage.ToString("0.0", tr)</small>
+                </div>
+                <div class="stack-bar" role="img" aria-label="Müşterilerin ürün sayısına göre dağılımı">
+                    @for (int i = 0; i < cs.Buckets.Count; i++)
+                    {
+                        <i class="b@(i)" style="width:@(cs.Buckets[i].Percent)%" title="@cs.Buckets[i].Label: %@cs.Buckets[i].Percent"></i>
+                    }
+                </div>
+                <ul class="xs-legend">
+                    @for (int i = 0; i < cs.Buckets.Count; i++)
+                    {
+                        <li><span class="dot b@(i)"></span>@cs.Buckets[i].Label<b>%@cs.Buckets[i].Percent</b></li>
+                    }
+                </ul>
+                <div class="combos">
+                    En sık birlikte satılanlar
+                    <div>
+                        @foreach (var c in cs.TopCombos)
+                        {
+                            <em class="tag">@c</em>
+                        }
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="dash-bottom">
+        <!-- Haberler -->
+        <div class="slot">
+            <section class="card" data-card="news">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-news" /></svg>Haberler ve duyurular</span>
+                    <a asp-controller="News" asp-action="Index">Tümünü gör ›</a>
+                </h2>
+                <ul class="news">
+                    @for (int i = 0; i < Model.News.Count; i++)
+                    {
+                        var n = Model.News[i];
+                        var (icon, color) = newsIcons[i % newsIcons.Length];
+                        <li>
+                            <span class="chip round @color"><svg class="ico"><use href="#@icon" /></svg></span>
+                            <div class="txt">
+                                <b><a asp-controller="News" asp-action="Details" asp-route-id="@n.Id">@n.Title</a></b>
+                                <span>@n.Summary</span>
+                            </div>
+                            <time>@UiHelpers.Day(n.Date)</time>
+                            <svg class="ico"><use href="#i-chev" /></svg>
+                        </li>
+                    }
+                </ul>
+            </section>
+        </div>
+
+        <!-- Bilgi alanı -->
+        <div class="slot">
+            <section class="card" data-card="info">
+                <h2 class="card-title">
+                    <span class="t"><svg class="ico"><use href="#i-bulb" /></svg>Bilgi alanı</span>
+                    <a asp-controller="Document" asp-action="Index">Daha fazla ›</a>
+                </h2>
+                <div class="info">
+                    @foreach (var x in info)
+                    {
+                        <a asp-controller="Document" asp-action="Index">
+                            <span class="chip @x.Color"><svg class="ico"><use href="#@x.Icon" /></svg></span>
+                            <div class="body"><b>@x.Title</b><span>@x.Text</span><u>Detayları gör →</u></div>
+                        </a>
+                    }
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div id="dash-live" class="visually-hidden" role="status" aria-live="polite"></div>
+
+@section Scripts {
+    <script src="~/js/dashboard-layout.js" asp-append-version="true"></script>
+    <script>
+        (function() {
+            var svg = document.getElementById('donut');
+            if (!svg) return;
+            var label = document.getElementById('d-label');
+            var value = document.getElementById('d-value');
+            var baseLabel = label.textContent, baseValue = value.textContent;
+            var slices = svg.querySelectorAll('.slice');
+            var rows = document.querySelectorAll('.legend li');
+
+            function on(i) {
+                var s = slices[i];
+                label.textContent = s.getAttribute('data-name') + ' %' + s.getAttribute('data-pct');
+                value.textContent = s.getAttribute('data-count');
+                svg.classList.add('has-active');
+                slices.forEach(function(x, k) { x.classList.toggle('is-active', k === i); });
+                rows.forEach(function(x, k) { x.classList.toggle('is-active', k === i); });
+            }
+            function off() {
+                label.textContent = baseLabel;
+                value.textContent = baseValue;
+                svg.classList.remove('has-active');
+                slices.forEach(function(x) { x.classList.remove('is-active'); });
+                rows.forEach(function(x) { x.classList.remove('is-active'); });
+            }
+            function wire(el, i) {
+                el.addEventListener('mouseenter', function() { on(i); });
+                el.addEventListener('mouseleave', off);
+                el.addEventListener('focusin', function() { on(i); });
+                el.addEventListener('focusout', off);
+            }
+            slices.forEach(wire);
+            rows.forEach(wire);
+        })();
+    </script>
+}

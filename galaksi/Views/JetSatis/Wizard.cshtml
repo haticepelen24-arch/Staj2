@@ -1,0 +1,136 @@
+﻿@model WizardVm
+@{
+    var d = Model.Draft;
+    var total = Model.Steps.Length;
+    ViewData["Title"] = d.Product + " teklifi";
+    ViewData["Nav"] = "jet";
+    var isLast = d.Step == total - 1;
+    var step = Model.IsPremium ? null : Model.Steps[d.Step];
+
+    string Show(Question q, string? v)
+    {
+        if (string.IsNullOrWhiteSpace(v)) return "—";
+        if (q.Type == "date" && DateTime.TryParseExact(v, "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
+            return dt.ToString("dd.MM.yyyy");
+        return v;
+    }
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/jetsatis.css" asp-append-version="true" />
+}
+
+<a class="back" asp-action="Index">‹ Jet Satış</a>
+
+<div class="wiz-head">
+    <h1 class="page-title">@d.Product teklifi</h1>
+    <span class="muted">@d.No</span>
+    <span class="badge @UiHelpers.Badge(d.Status)">@d.Status</span>
+</div>
+
+<ol class="stepper" aria-label="Adımlar">
+    @for (int i = 0; i < total; i++)
+    {
+        var state = Model.IsPremium || i < d.Step ? "done" : i == d.Step ? "current" : "todo";
+        <li class="@state"><span class="n">@(i + 1)</span><span class="t">@Model.Steps[i].Title</span></li>
+    }
+    <li class="@(Model.IsPremium ? "current" : "todo")"><span class="n">@(total + 1)</span><span class="t">Prim</span></li>
+</ol>
+
+@if (!Model.IsPremium)
+{
+    <form method="post" asp-action="Step" asp-route-id="@d.Id" class="card" novalidate>
+        <h2 class="card-title">Adım @(d.Step + 1)/@total: @step!.Title</h2>
+
+        <div class="qgrid">
+            @foreach (var q in step.Questions)
+            {
+                var name = "a_" + q.Key;
+                var val = Model.Values.TryGetValue(q.Key, out var posted) ? posted
+                        : d.Answers.TryGetValue(q.Key, out var saved) ? saved : "";
+                var err = Model.Errors.TryGetValue(q.Key, out var msg) ? msg : null;
+
+                <div class="field @(err is null ? "" : "has-error")">
+                    @if (q.Type == "yesno")
+                    {
+                        <span class="lbl" id="l-@q.Key">@q.Label</span>
+                        <div class="seg" role="radiogroup" aria-labelledby="l-@q.Key">
+                            <label><input type="radio" name="@name" value="Evet" checked="@(val == "Evet")" /><span>Evet</span></label>
+                            <label><input type="radio" name="@name" value="Hayır" checked="@(val == "Hayır")" /><span>Hayır</span></label>
+                        </div>
+                    }
+                    else
+                    {
+                        <label class="lbl" for="@name">@q.Label@(q.Required ? "" : " (isteğe bağlı)")</label>
+                        @if (q.Type == "select")
+                        {
+                            @Html.DropDownList(name, new SelectList(q.Options!, val), "Seçin", new { id = name })
+                        }
+                        else if (q.Type == "number")
+                        {
+                            <input id="@name" name="@name" type="number" value="@val" min="@q.Min" max="@q.Max" step="1" />
+                        }
+                        else if (q.Type == "date")
+                        {
+                            <input id="@name" name="@name" type="date" value="@val" />
+                        }
+                        else
+                        {
+                            <input id="@name" name="@name" type="text" value="@val" />
+                        }
+                    }
+                    @if (q.Hint is not null)
+                    {
+                        <small class="hint">@q.Hint</small>
+                    }
+                    @if (err is not null)
+                    {
+                        <span class="field-error">@err</span>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="wiz-actions">
+            <button class="btn btn-primary" type="submit" name="nav" value="next">@(isLast ? "Teklif al" : "İleri ›")</button>
+            <button class="btn" type="submit" name="nav" value="exit">Kaydet ve çık</button>
+            @if (d.Step > 0)
+            {
+                <button class="btn" type="submit" name="nav" value="back">‹ Geri</button>
+            }
+        </div>
+    </form>
+}
+else
+{
+    <div class="premium-grid">
+        <section class="card premium">
+            <span class="muted">Hesaplanan yıllık prim</span>
+            <div class="amount">@UiHelpers.Money(d.Premium ?? 0)</div>
+            <p class="hint">Bu tutar örnek hesaplamadır. Teklif oluşturduğunuzda işlem tamamlanır ve devam eden teklifler listesinden çıkar.</p>
+            <div class="wiz-actions">
+                <form method="post" asp-action="Complete" asp-route-id="@d.Id">
+                    <button class="btn btn-primary" type="submit">Teklif oluştur</button>
+                </form>
+                <form method="post" asp-action="EditAnswers" asp-route-id="@d.Id">
+                    <button class="btn" type="submit">‹ Bilgileri düzenle</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Girdiğiniz bilgiler</h2>
+            @foreach (var st in Model.Steps)
+            {
+                <h3 class="sum-title">@st.Title</h3>
+                <dl class="sum">
+                    @foreach (var q in st.Questions)
+                    {
+                        <dt>@q.Label</dt>
+                        <dd>@Show(q, d.Answers.GetValueOrDefault(q.Key))</dd>
+                    }
+                </dl>
+            }
+        </section>
+    </div>
+}

@@ -1,0 +1,115 @@
+﻿@model JetSatisIndexVm
+@using galaksi.Models
+@using galaksi.Services
+
+@{
+    ViewData["Title"] = "Jet Satış";
+    ViewData["Nav"] = "jet";
+    var icons = new Dictionary<string, string>
+    {
+        ["Trafik"] = "🚦",
+        ["Kasko"] = "🚗",
+        ["Yangın"] = "🔥",
+        ["Sağlık"] = "🩺",
+        ["Konut"] = "🏠",
+        ["Seyahat"] = "✈️"
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/jetsatis.css" asp-append-version="true" />
+}
+
+<h1 class="page-title">Jet Satış</h1>
+<p class="page-sub">Ürünü seçin, soruları adım adım yanıtlayın ve primi hesaplayın.</p>
+
+<div class="stack">
+    <section class="card">
+        <h2 class="card-title">Yeni teklif</h2>
+        <form method="post" asp-action="Start">
+            <fieldset class="ptiles">
+                <legend class="visually-hidden">Ürün seçin</legend>
+                @foreach (var p in QuoteForm.Products)
+                {
+                    <label class="ptile">
+                        <input type="radio" name="product" value="@p" />
+                        <span class="pbox"><span class="pico">@icons.GetValueOrDefault(p, "📄")</span><b>@p</b></span>
+                    </label>
+                }
+            </fieldset>
+            <div class="start-actions">
+                <button class="btn btn-primary" type="submit">Devam</button>
+                <span class="hint">Seçtiğiniz ürünün soruları bir sonraki adımda sorulur.</span>
+            </div>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">
+            <span id="list-title">Son teklifler</span>
+            <button type="button" class="linkbtn" id="clear-filter" hidden>Filtreyi temizle</button>
+        </h2>
+
+        @if (Model.Open.Count == 0)
+        {
+            <div class="empty">Devam eden teklifiniz yok. Yukarıdan bir ürün seçerek başlayın.</div>
+        }
+        else
+        {
+            <div class="table-wrap" id="open-wrap">
+                <table class="table" id="open-table">
+                    <thead>
+                        <tr><th>Teklif no</th><th>Ürün</th><th>Durum</th><th>İlerleme</th><th>Son işlem</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Open)
+                        {
+                            var total = QuoteCatalog.StepsFor(d.Product).Length;
+                            <tr data-product="@d.Product">
+                                <td><a class="rowlink" asp-action="Wizard" asp-route-id="@d.Id">@d.No</a></td>
+                                <td>@icons.GetValueOrDefault(d.Product, "📄") @d.Product</td>
+                                <td><span class="badge @UiHelpers.Badge(d.Status)">@d.Status</span></td>
+                                <td>@(d.Step >= total ? "Prim hesaplandı: " + UiHelpers.Money(d.Premium ?? 0) : $"Adım {d.Step + 1}/{total}")</td>
+                                <td>@UiHelpers.Ago(d.Updated)</td>
+                                <td class="go">Devam et ›</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty" id="no-match" hidden>Bu ürün için devam eden teklif yok.</div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        (function() {
+            var radios = document.querySelectorAll('input[name="product"]');
+            var rows = document.querySelectorAll('#open-table tbody tr');
+            var title = document.getElementById('list-title');
+            var clear = document.getElementById('clear-filter');
+            var wrap = document.getElementById('open-wrap');
+            var none = document.getElementById('no-match');
+
+            function apply(product) {
+                var shown = 0;
+                rows.forEach(function(r) {
+                    var ok = !product || r.getAttribute('data-product') === product;
+                    r.hidden = !ok;
+                    if (ok) shown++;
+                });
+                title.textContent = product ? product + ' teklifleri' : 'Son teklifler';
+                clear.hidden = !product;
+                if (wrap) wrap.hidden = !!product && shown === 0;
+                if (none) none.hidden = !(product && shown === 0);
+            }
+            radios.forEach(function(r) {
+                r.addEventListener('change', function() { apply(r.value); });
+            });
+            clear.addEventListener('click', function() {
+                radios.forEach(function(r) { r.checked = false; });
+                apply('');
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,28 @@
+﻿@model IReadOnlyList<MonthlyRow>
+@{
+    var report = (ReportItem)ViewData["Report"]!;
+    ViewData["Title"] = report.Title; ViewData["Nav"] = "rapor";
+    var max = Model.Max(m => m.Premium);
+}
+<a class="back" asp-action="Index">‹ Rapor merkezi</a>
+<h1 class="page-title">@report.Title</h1>
+<p class="page-sub">@report.Description (örnek veri)</p>
+
+<section class="card">
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th>Ay</th><th class="num">Poliçe sayısı</th><th class="num">Prim</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var m in Model)
+            {
+                var pct = (int)(m.Premium * 100 / max);
+                <tr>
+                    <td>@m.Month</td><td class="num">@m.Policies</td>
+                    <td class="num">@UiHelpers.Money(m.Premium)</td>
+                    <td><div class="bar"><i style="width:@(pct)%"></i></div></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

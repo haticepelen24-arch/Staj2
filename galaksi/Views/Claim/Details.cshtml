@@ -1,0 +1,55 @@
+﻿@model ClaimItem
+@{
+    ViewData["Title"] = Model.FileNo;
+    ViewData["Nav"] = "";
+    var stages = new[] { "Bildirim alındı", "İnceleme", "Karar", "Ödeme" };
+    int current = Model.Status switch { "İncelemede" => 1, "Reddedildi" => 2, "Ödendi" => 4, "Kapandı" => 4, _ => 0 };
+    var rejected = Model.Status == "Reddedildi";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/claim.css" asp-append-version="true" />
+}
+
+<a class="back" asp-action="Index">‹ Hasar sorgulama</a>
+
+<div class="claim-head">
+    <h1 class="page-title">@Model.FileNo</h1>
+    <span class="badge @UiHelpers.Badge(Model.Status)">@Model.Status</span>
+</div>
+
+<div class="claim-grid">
+    <section class="card">
+        <h2 class="card-title">Dosya bilgileri</h2>
+        <dl class="kv">
+            <dt>Poliçe no</dt>
+            <dd><a asp-controller="Policy" asp-action="Index" asp-route-q="@Model.PolicyNo">@Model.PolicyNo</a></dd>
+            <dt>Müşteri</dt>
+            <dd>@Model.Customer</dd>
+            <dt>Hasar türü</dt>
+            <dd>@(string.IsNullOrEmpty(Model.Type) ? "—" : Model.Type)</dd>
+            <dt>Hasar tarihi</dt>
+            <dd>@UiHelpers.Day(Model.Date)</dd>
+            <dt>Bildirim tarihi</dt>
+            <dd>@UiHelpers.Day(Model.Reported ?? Model.Date)</dd>
+            <dt>Tutar</dt>
+            <dd>@(Model.Amount > 0 ? UiHelpers.Money(Model.Amount) : "—")</dd>
+            <dt>Telefon</dt>
+            <dd>@(string.IsNullOrEmpty(Model.Phone) ? "—" : Model.Phone)</dd>
+            <dt>Açıklama</dt>
+            <dd>@(string.IsNullOrEmpty(Model.Description) ? "—" : Model.Description)</dd>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Dosya durumu</h2>
+        <ol class="timeline">
+            @for (int i = 0; i < stages.Length; i++)
+            {
+                var state = i < current ? "done" : i == current ? "current" : "todo";
+                var label = stages[i];
+                if (rejected && i == 2) { state = "bad"; label = "Karar: Reddedildi"; }
+                <li class="@state"><span class="dot"></span>@label</li>
+            }
+        </ol>
+    </section>
+</div>

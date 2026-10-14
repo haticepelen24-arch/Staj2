@@ -1,0 +1,13 @@
+﻿@model IReadOnlyList<AppItem>
+@{ ViewData["Title"] = "Uygulama Merkezi"; ViewData["Nav"] = "uygulama"; }
+<h1 class="page-title">Uygulama merkezi</h1>
+<p class="page-sub">Acente uygulamalarına tek yerden ulaşın.</p>
+
+<div class="tiles">
+    @foreach (var a in Model)
+    {
+        <a class="tile" href="@a.Url">
+            <div class="ic">@a.Icon</div><b>@a.Name</b><span>@a.Description</span>
+        </a>
+    }
+</div>

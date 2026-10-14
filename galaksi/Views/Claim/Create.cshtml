@@ -1,0 +1,78 @@
+﻿@model ClaimNewVm
+@{
+    ViewData["Title"] = "Hasar Bildirimi";
+    ViewData["Nav"] = "";
+    var today = DateTime.Today.ToString("yyyy-MM-dd");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/claim.css" asp-append-version="true" />
+}
+
+<a class="back" asp-action="Index">‹ Hasar sorgulama</a>
+<h1 class="page-title">Hasar bildirimi</h1>
+<p class="page-sub">Poliçeyi seçin ve hasar bilgilerini girin. Dosya numaranız bildirim sonrasında oluşturulur.</p>
+
+<form method="post" asp-action="Create" class="card" novalidate>
+    @if (Model.Policies.Count == 0)
+    {
+        <div class="empty">Hasar bildirilebilecek aktif poliçe bulunamadı.</div>
+    }
+    else
+    {
+        <div class="cgrid">
+            <div class="field full">
+                <label class="lbl" asp-for="Form.PolicyNo">Poliçe</label>
+                <select asp-for="Form.PolicyNo">
+                    <option value="">Seçin</option>
+                    @foreach (var p in Model.Policies)
+                    {
+                        <option value="@p.No">@p.No · @p.Type · @p.Customer</option>
+                    }
+                </select>
+                <span asp-validation-for="Form.PolicyNo" class="field-error"></span>
+            </div>
+
+            <div class="field">
+                <label class="lbl" asp-for="Form.Date">Hasar tarihi</label>
+                <input asp-for="Form.Date" type="date" max="@today" />
+                <small class="hint">Poliçe dönemi içinde olmalı.</small>
+                <span asp-validation-for="Form.Date" class="field-error"></span>
+            </div>
+
+            <div class="field">
+                <label class="lbl" asp-for="Form.Type">Hasar türü</label>
+                <select asp-for="Form.Type">
+                    <option value="">Seçin</option>
+                    @foreach (var t in ClaimForm.Types)
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </select>
+                <span asp-validation-for="Form.Type" class="field-error"></span>
+            </div>
+
+            <div class="field">
+                <label class="lbl" asp-for="Form.EstimatedAmount">Tahmini tutar (₺, isteğe bağlı)</label>
+                <input asp-for="Form.EstimatedAmount" type="number" min="0" step="1" />
+                <span asp-validation-for="Form.EstimatedAmount" class="field-error"></span>
+            </div>
+
+            <div class="field">
+                <label class="lbl" asp-for="Form.Phone">Cep telefonu</label>
+                <input asp-for="Form.Phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="05XX XXX XX XX" />
+                <span asp-validation-for="Form.Phone" class="field-error"></span>
+            </div>
+
+            <div class="field full">
+                <label class="lbl" asp-for="Form.Description">Hasar açıklaması</label>
+                <textarea asp-for="Form.Description" rows="4"></textarea>
+                <span asp-validation-for="Form.Description" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Bildirimi gönder</button>
+            <a class="btn" asp-action="Index">Vazgeç</a>
+        </div>
+    }
+</form>

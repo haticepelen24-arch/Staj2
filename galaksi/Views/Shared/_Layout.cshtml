@@ -1,0 +1,160 @@
+﻿@inject galaksi.Services.IPortalData Portal
+@{
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var active = ViewData["Nav"] as string ?? "";
+    string Cls(string key) => active == key ? "is-active" : "";
+
+    var displayName = User.Identity?.Name ?? "";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var initials = string.Concat(displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2).Select(w => char.ToUpper(w[0], tr)));
+
+    var notes = Portal.GetNotifications();
+    var unread = notes.Count(n => n.Unread);
+    string KindIcon(string kind) => kind switch
+    {
+        "news" => "i-news",
+        "promo" => "i-tag",
+        "system" => "i-wrench",
+        "claim" => "i-shield",
+        _ => "i-info"
+    };
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Galaksi</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/header.css" asp-append-version="true" />
+    <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t) } catch (e) { }</script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <partial name="_Icons" />
+
+    <header class="topbar">
+        <div class="topbar-inner">
+            <button type="button" class="nav-toggle" aria-label="Menüyü aç" aria-expanded="false">
+                <svg class="ico"><use href="#i-menu" /></svg>
+            </button>
+
+            <a class="brand" asp-controller="Home" asp-action="Index" aria-label="Galaksi ana sayfa">
+                <img class="logo-img is-light" src="~/img/logo.png" alt="Türk Nippon Sigorta" />
+                <img class="logo-img is-dark" src="~/img/logo-dark.png" alt="" />
+                <span class="brand-sub">Galaksi</span>
+            </a>
+
+            <nav class="mainnav" aria-label="Ana menü">
+                <a class="@Cls("jet")" asp-controller="JetSatis" asp-action="Index"><svg class="ico"><use href="#i-bolt" /></svg>Jet Satış</a>
+                <a class="@Cls("dokuman")" asp-controller="Document" asp-action="Index"><svg class="ico"><use href="#i-file" /></svg>Doküman Merkezi</a>
+                <a class="@Cls("rapor")" asp-controller="Report" asp-action="Index"><svg class="ico"><use href="#i-chart" /></svg>Rapor Merkezi</a>
+                <a class="@Cls("haber")" asp-controller="News" asp-action="Index"><svg class="ico"><use href="#i-news" /></svg>Haber Merkezi</a>
+                <a class="@Cls("uygulama")" asp-controller="AppCenter" asp-action="Index"><svg class="ico"><use href="#i-grid" /></svg>Uygulama Merkezi</a>
+            </nav>
+
+
+            <div class="tools">
+                <!-- Sık kullanılanlar -->
+                <!-- Arama (yalnızca tıklayınca açılır) -->
+                <div class="menu click-only">
+                    <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Ara" title="Ara">
+                        <svg class="ico"><use href="#i-search" /></svg>
+                    </button>
+                    <div class="menu-panel search">
+                        <div class="menu-card">
+                            <form class="searchbox" method="get" asp-controller="Policy" asp-action="Index" role="search">
+                                <div class="sfield">
+                                    <svg class="ico"><use href="#i-search" /></svg>
+                                    <input type="search" name="q" placeholder="Poliçe no veya müşteri adı" aria-label="Poliçe veya müşteri ara" />
+                                </div>
+                                <small>Aramak için Enter'a basın</small>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sık kullanılanlar -->
+                <div class="menu">
+                    <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Sık kullanılanlar" title="Sık kullanılanlar">
+                        <svg class="ico"><use href="#i-star" /></svg>
+                    </button>
+                    <div class="menu-panel">
+                        <div class="menu-card" role="menu">
+                            <a class="menu-item" role="menuitem" asp-controller="JetSatis" asp-action="Index"><svg class="ico"><use href="#i-file" /></svg>Teklif girişi</a>
+                            <a class="menu-item" role="menuitem" asp-controller="Policy" asp-action="Index"><svg class="ico"><use href="#i-search" /></svg>Poliçe sorgulama</a>
+                            <a class="menu-item" role="menuitem" asp-controller="Customer" asp-action="Index"><svg class="ico"><use href="#i-users" /></svg>Müşteri işlemleri</a>
+                            <a class="menu-item" role="menuitem" asp-controller="Claim" asp-action="Index"><svg class="ico"><use href="#i-shield" /></svg>Hasar sorgulama</a>
+                            <a class="menu-item" role="menuitem" asp-controller="Claim" asp-action="Create"><svg class="ico"><use href="#i-alert" /></svg>Hasar bildirimi</a>
+                            <a class="menu-item" role="menuitem" asp-controller="Report" asp-action="Index"><svg class="ico"><use href="#i-chart" /></svg>Raporlar</a>
+                            <a class="menu-item" role="menuitem" asp-controller="Document" asp-action="Index"><svg class="ico"><use href="#i-folder" /></svg>Doküman merkezi</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bildirimler -->
+                <div class="menu">
+                    <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Bildirimler">
+                        <svg class="ico"><use href="#i-bell" /></svg>
+                        <span class="badge-dot" id="bell-badge" @(unread == 0 ? "hidden" : "")>@unread</span>
+                    </button>
+                    <div class="menu-panel wide">
+                        <div class="menu-card">
+                            <div class="nhead"><span>Bildirimler</span><button type="button" id="read-all">Tümünü okundu say</button></div>
+                            <ul class="nlist" id="nlist">
+                                @foreach (var n in notes)
+                                {
+                                    <li class="nitem @(n.Unread ? "unread" : "")" data-id="@n.Id">
+                                        <a href="@n.Url">
+                                            <span class="nchip @n.Kind"><svg class="ico"><use href="#@KindIcon(n.Kind)" /></svg></span>
+                                            <span class="ntxt"><b>@n.Title</b><span>@n.Text</span><time>@UiHelpers.Ago(n.Time)</time></span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                            <div class="nfoot"><a asp-controller="News" asp-action="Index">Tüm haberleri gör</a></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kullanıcı -->
+                <div class="menu">
+                    <button type="button" class="menu-btn" aria-haspopup="true" aria-expanded="false">
+                        <span class="avatar" aria-hidden="true">@initials</span>
+                        <span class="user-meta"><b>@displayName</b><span>@role</span></span>
+                        <svg class="ico caret"><use href="#i-chev-down" /></svg>
+                    </button>
+                    <div class="menu-panel">
+                        <div class="menu-card" role="menu">
+                            <a class="menu-item" role="menuitem" asp-controller="Settings" asp-action="Index"><svg class="ico"><use href="#i-gear" /></svg>Ayarlar</a>
+                            <div class="menu-sep"></div>
+                            <form class="menu-form" method="post" asp-controller="Account" asp-action="Logout">
+                                <button type="submit" class="menu-item danger" role="menuitem"><svg class="ico"><use href="#i-logout" /></svg>Çıkış</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        @RenderBody()
+    </main>
+
+    <footer class="app-footer">
+        <span>Türk Nippon Sigorta</span>
+        <span>Güvenin, geleceğe temelidir.</span>
+        <span>@DateTime.Now.ToString("d MMMM yyyy · HH:mm", tr)</span>
+    </footer>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div id="server-toasts" hidden data-ok="@(TempData["Ok"] as string)" data-error="@(TempData["Error"] as string)"></div>
+
+    <script src="~/js/shell.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

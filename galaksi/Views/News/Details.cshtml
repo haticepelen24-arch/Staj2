@@ -1,0 +1,8 @@
+﻿@model NewsItem
+@{ ViewData["Title"] = Model.Title; ViewData["Nav"] = "haber"; }
+<a class="back" asp-action="Index">‹ Haber merkezi</a>
+<section class="card">
+    <h1 class="page-title">@Model.Icon @Model.Title</h1>
+    <p class="page-sub">@UiHelpers.Day(Model.Date)</p>
+    <p>@Model.Body</p>
+</section>

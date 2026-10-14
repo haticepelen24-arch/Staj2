@@ -1,0 +1,21 @@
+﻿@model IReadOnlyList<NewsItem>
+@{ ViewData["Title"] = "Haber Merkezi"; ViewData["Nav"] = "haber"; }
+<link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+<h1 class="page-title">Haber merkezi</h1>
+<p class="page-sub">Duyurular, ürün haberleri ve kampanyalar.</p>
+
+<section class="card">
+    <ul class="news">
+        @foreach (var n in Model)
+        {
+            <li>
+                <span class="ic">@n.Icon</span>
+                <div class="txt">
+                    <b><a asp-action="Details" asp-route-id="@n.Id">@n.Title</a></b>
+                    <span>@n.Summary</span>
+                </div>
+                <time>@UiHelpers.Day(n.Date)</time>
+            </li>
+        }
+    </ul>
+</section>

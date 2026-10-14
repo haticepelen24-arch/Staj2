@@ -1,0 +1,131 @@
+﻿
+    /* Galaksi - tasarım değişkenleri. Renk/boşluk değişikliği yalnızca burada yapılır. */
+    :root {
+        --bg: #eef2f7;
+        --card: #ffffff;
+        --ink: #1c2a3a;
+        --mute: #6b7a8c;
+        --line: #e3e9f0;
+        --brand: #1f6fd1;
+        --soft: #eaf2fd;
+        --hero: #e6f0fb;
+        --field: #f7f9fc;
+        --nav: #2f3b4c;
+        --navink: #dbe3ee;
+        --up: #1e9e5a;
+        --down: #d63b3b;
+        --err: #d63b3b;
+        --logo-blue: #1f6fd1;
+        --logo-green: #8bc53f;
+        --logo-yellow: #f2b705;
+        --radius: 14px;
+        --radius-sm: 10px;
+        --gap: 20px;
+        --font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    }
+    /* Koyu tema: sistem koyu moddaysa otomatik; data-theme="dark"/"light" ile elle zorlanabilir */
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+            --bg: #0f1621;
+            --card: #182131;
+            --ink: #e8eef6;
+            --mute: #93a3b8;
+            --line: #263247;
+            --brand: #5aa2ff;
+            --soft: #1d2d46;
+            --hero: #16243a;
+            --field: #121b29;
+            --nav: #121b29;
+            --navink: #c5d1e2;
+            --up: #3ecf8e;
+            --down: #ff7b7b;
+            --err: #ff7b7b;
+        }
+    }
+
+    :root[data-theme="dark"] {
+        --bg: #0f1621;
+        --card: #182131;
+        --ink: #e8eef6;
+        --mute: #93a3b8;
+        --line: #263247;
+        --brand: #5aa2ff;
+        --soft: #1d2d46;
+        --hero: #16243a;
+        --field: #121b29;
+        --nav: #121b29;
+        --navink: #c5d1e2;
+        --up: #3ecf8e;
+        --down: #ff7b7b;
+        --err: #ff7b7b;
+    }
+    /* Temel */
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    html{
+        height: 100%;
+    }
+
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 14px/1.5 var(--font);
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    a {
+        color: var(--brand);
+        text-decoration: none;
+    }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+            outline: 2px solid var(--brand);
+            outline-offset: 2px;
+        }
+
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+    /* Logo: açık/koyu sürüm geçişi (iki <img> yan yana konur) */
+    .logo-img {
+        height: 40px;
+        width: auto;
+        display: block;
+    }
+
+        .logo-img.is-dark {
+            display: none;
+        }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) .logo-img.is-light {
+            display: none;
+        }
+
+        :root:not([data-theme="light"]) .logo-img.is-dark {
+            display: block;
+        }
+    }
+
+    :root[data-theme="dark"] .logo-img.is-light {
+        display: none;
+    }
+
+    :root[data-theme="dark"] .logo-img.is-dark {
+        display: block;
+    }
+
