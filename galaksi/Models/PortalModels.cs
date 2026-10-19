@@ -67,6 +67,16 @@ public static class UiHelpers
         "İptal" or "Reddedildi" => "bad",
         _ => ""
     };
+    public static string ProductColor(string name) => name switch
+    {
+        "Trafik" => "#1f6fd1",
+        "Kasko" => "#14a5a5",
+        "Yangın" => "#3aa655",
+        "Sağlık" => "#f2b705",
+        "Konut" => "#8ec5f0",
+        "Seyahat" => "#b7c6dc",
+        _ => "#7b8794"
+    };
     public static string Ago(DateTime t)
     {
         var d = DateTime.Now - t;

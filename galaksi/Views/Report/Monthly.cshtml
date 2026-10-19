@@ -1,0 +1,106 @@
+﻿@model MonthlyReportVm
+@{
+    var report = (ReportItem)ViewData["Report"]!;
+    ViewData["Title"] = report.Title;
+    ViewData["Nav"] = "rapor";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var cur = Model.Current;
+
+    double? Pct(decimal c, decimal? p) => p is decimal pv && pv != 0 ? (double)((c - pv) * 100m / pv) : null;
+    string DClass(double? v) => v is null ? "" : v >= 0 ? "up" : "down";
+    string DText(double? v) => v is double d ? (d >= 0 ? "▲" : "▼") + " %" + Math.Abs(d).ToString("0.0", tr) : "—";
+    string Diff(decimal v, bool money)
+    {
+        var sign = v >= 0 ? "+" : "−";
+        var abs = Math.Abs(v);
+        return sign + (money ? UiHelpers.Money(abs) : abs.ToString("N0", tr));
+    }
+
+    var polPct = Pct(cur.Policies, cur.PrevPolicies);
+    var premPct = Pct(cur.Premium, cur.PrevPremium);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
+}
+
+<div class="rep">
+    <a class="back" asp-action="Index">‹ Rapor merkezi</a>
+    <h1 class="page-title">@report.Title</h1>
+    <p class="page-sub">Bu ayın üretimi öne çıkarıldı. Önceki ayların ayrıntısını görmek için satırın üzerine gelin veya tıklayın. (Örnek veri)</p>
+
+    <section class="card month-hero" aria-labelledby="cur-title">
+        <div>
+            <div class="mh-label" id="cur-title">@cur.Month @cur.Year <span class="pill">Bu ay</span></div>
+            <div class="mh-big">@cur.Policies.ToString("N0", tr)</div>
+            <div class="mh-unit">poliçe</div>
+            <div class="mh-prem">@UiHelpers.Money(cur.Premium)</div>
+            <div class="mh-unit">toplam prim</div>
+            <div class="chgrow">
+                <div class="chgbox">
+                    <b class="@DClass(polPct)">@DText(polPct)</b>
+                    <span>önceki aya göre poliçe@(cur.PrevPolicies is int pp ? " (" + Diff(cur.Policies - pp, false) + ")" : "")</span>
+                </div>
+                <div class="chgbox">
+                    <b class="@DClass(premPct)">@DText(premPct)</b>
+                    <span>önceki aya göre prim@(cur.PrevPremium is decimal pm ? " (" + Diff(cur.Premium - pm, true) + ")" : "")</span>
+                </div>
+            </div>
+        </div>
+        <div class="md-stack"><partial name="_MonthDetail" model="cur" /></div>
+    </section>
+
+    <h2 class="list-title">Önceki aylar</h2>
+    <div class="mlist">
+        @for (int i = 0; i < Model.Others.Count; i++)
+        {
+            var m = Model.Others[i];
+            var pc = Pct(m.Policies, m.PrevPolicies);
+            var pq = Pct(m.Premium, m.PrevPremium);
+            var pid = "mb-" + i;
+            <div class="mrow">
+                <button type="button" class="mhead" aria-expanded="false" aria-controls="@pid">
+                    <span class="mname">@m.Month @m.Year</span>
+                    <span class="mval">
+                        <span><b>@m.Policies.ToString("N0", tr)</b> <small>poliçe</small></span>
+                        <em class="chg @DClass(pc)">@DText(pc)</em>
+                    </span>
+                    <span class="mval">
+                        <span><b>@UiHelpers.Money(m.Premium)</b> <small>prim</small></span>
+                        <em class="chg @DClass(pq)">@DText(pq)</em>
+                    </span>
+                    <svg class="ico caret" aria-hidden="true"><use href="#i-chev-down" /></svg>
+                </button>
+                <div class="mbody" id="@pid">
+                    <div>
+                        <div class="mdetail"><partial name="_MonthDetail" model="m" /></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            document.querySelectorAll('.mrow').forEach(function (row) {
+                var btn = row.querySelector('.mhead');
+                var pinned = false;
+                function set(open) {
+                    row.classList.toggle('open', open);
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                }
+                if (canHover) {
+                    row.addEventListener('mouseenter', function () { if (!pinned) set(true); });
+                    row.addEventListener('mouseleave', function () { if (!pinned) set(false); });
+                }
+                btn.addEventListener('click', function () {
+                    pinned = !pinned;
+                    set(pinned);
+                });
+            });
+        })();
+    </script>
+}

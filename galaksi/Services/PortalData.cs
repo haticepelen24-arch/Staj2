@@ -23,6 +23,8 @@ public interface IPortalData
     NewsItem? GetNewsById(int id);
     IReadOnlyList<AppItem> GetApps();
     IReadOnlyList<NotificationItem> GetNotifications();
+    MonthlyReportVm GetMonthlyReport();
+    CrossSellReportVm GetCrossSellReport();
 }
 
 // Örnek veri. Gerçek servis/veritabanı geldiğinde yeni bir IPortalData uygulaması yazılır,
@@ -264,6 +266,108 @@ public class SamplePortalData : IPortalData
             new(2, "promo", "Trafik sigortasında özel indirim", "Kampanya koşullarını Haber Merkezi'nde görün.", now.AddHours(-5), "/News/Details/4", true),
             new(3, "system", "Planlı sistem bakımı", "Bakım saatlerini haber detayında görebilirsiniz.", now.AddDays(-1), "/News/Details/2", true),
             new(4, "claim", "Hasar dosyanız güncellendi", "HSR-50121 dosyası incelemeye alındı.", now.AddDays(-2), "/Claim?q=HSR-50121", false),
+        };
+    }
+    // Örnek veri: gerçek rapor kaynağı bağlanınca burası değişecek
+    public MonthlyReportVm GetMonthlyReport()
+    {
+        (string Name, int W, string Color)[] mix =
+        {
+            ("Trafik", 32, "#1f6fd1"), ("Kasko", 18, "#14a5a5"), ("Yangın", 14, "#3aa655"),
+            ("Sağlık", 12, "#f2b705"), ("Konut", 10, "#8ec5f0"), ("Seyahat", 8, "#b7c6dc"), ("Diğer", 6, "#7b8794"),
+        };
+
+        var list = new List<MonthDetail>();
+        for (int idx = 0; idx < Months.Length; idx++)
+        {
+            var m = Months[idx];
+            var prev = idx > 0 ? Months[idx - 1] : null;
+
+            var weights = mix.Select((x, i) => Math.Max(1, x.W + ((idx * 3 + i) % 3 - 1))).ToArray();
+            var sum = weights.Sum();
+            var counts = weights.Select(w => (int)Math.Round(m.Policies * (double)w / sum)).ToArray();
+            counts[0] += m.Policies - counts.Sum();   // yuvarlama farkı Trafik'e eklenir
+            var products = mix.Select((x, i) => new ProductShare(x.Name, counts[i], x.Color)).ToList();
+
+            list.Add(new MonthDetail(m.Month, 2026, m.Policies, m.Premium, prev?.Policies, prev?.Premium,
+                (int)Math.Round(m.Policies * (0.025 + 0.004 * (idx % 3))),
+                (int)Math.Round(m.Policies * (0.20 + 0.01 * idx)),
+                products));
+        }
+
+        return new MonthlyReportVm
+        {
+            Current = list[^1],
+            Others = list.Take(list.Count - 1).Reverse().ToList()
+        };
+    }
+
+    public CrossSellReportVm GetCrossSellReport()
+    {
+        const int total = 860;
+        string[] products = { "Trafik", "Kasko", "Konut", "Yangın", "Sağlık", "Seyahat" };
+        var pop = new Dictionary<string, double>
+        {
+            ["Trafik"] = 100,
+            ["Kasko"] = 78,
+            ["Konut"] = 56,
+            ["Yangın"] = 46,
+            ["Sağlık"] = 40,
+            ["Seyahat"] = 24
+        };
+
+        double Boost(string x, string y)
+        {
+            var key = string.CompareOrdinal(x, y) < 0 ? x + "|" + y : y + "|" + x;
+            return key switch
+            {
+                "Kasko|Trafik" => 2.4,
+                "Konut|Yangın" => 2.2,
+                "Sağlık|Seyahat" => 1.6,
+                "Konut|Trafik" => 1.2,
+                "Kasko|Konut" => 1.1,
+                _ => 1.0
+            };
+        }
+
+        var pairCount = new Dictionary<string, int>();
+        var pairs = new List<ComboRow>();
+        for (int i = 0; i < products.Length; i++)
+            for (int j = i + 1; j < products.Length; j++)
+            {
+                var a = products[i];
+                var b = products[j];
+                var n = (int)Math.Round(pop[a] * pop[b] / 100.0 * Boost(a, b) * 1.05);
+                pairCount[a + "|" + b] = n;
+                pairs.Add(new ComboRow(new[] { a, b }, n));
+            }
+
+        var triples = new List<ComboRow>();
+        int t = 0;
+        for (int i = 0; i < products.Length; i++)
+            for (int j = i + 1; j < products.Length; j++)
+                for (int k = j + 1; k < products.Length; k++)
+                {
+                    var a = products[i];
+                    var b = products[j];
+                    var c = products[k];
+                    var min = Math.Min(pairCount[a + "|" + b], Math.Min(pairCount[a + "|" + c], pairCount[b + "|" + c]));
+                    var f = 0.44 + 0.03 * (t++ % 4);
+                    triples.Add(new ComboRow(new[] { a, b, c }, (int)Math.Round(min * f)));
+                }
+
+        const int single = 499;   // %58: ana sayfadaki özetle aynı
+        return new CrossSellReportVm
+        {
+            TotalCustomers = total,
+            MultiProductCustomers = total - single,
+            AveragePerCustomer = 1.8,
+            Buckets = new List<CrossSellBucket>
+            {
+                new("1 ürün", 58), new("2 ürün", 27), new("3 ve üzeri", 15),
+            },
+            Pairs = pairs.OrderByDescending(p => p.Customers).ToList(),
+            Triples = triples.OrderByDescending(p => p.Customers).Take(10).ToList(),
         };
     }
 }

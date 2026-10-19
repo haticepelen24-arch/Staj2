@@ -1,0 +1,117 @@
+﻿@model CrossSellReportVm
+@{
+    var report = (ReportItem)ViewData["Report"]!;
+    ViewData["Title"] = report.Title;
+    ViewData["Nav"] = "rapor";
+
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var maxPair = Model.Pairs.Max(x => x.Customers);
+    var maxTriple = Model.Triples.Max(x => x.Customers);
+    var topPair = Model.Pairs[0];
+    var topTriple = Model.Triples[0];
+    string Pct(int n) => (n * 100.0 / Model.TotalCustomers).ToString("0.0", tr);
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/report.css" asp-append-version="true" />
+}
+
+<div class="rep">
+    <a class="back" asp-action="Index">‹ Rapor merkezi</a>
+    <h1 class="page-title">@report.Title</h1>
+    <p class="page-sub">Hangi ürünler birlikte satılıyor? En çok tercih edilen ikili ve üçlü kombinasyonlar. (Örnek veri)</p>
+
+    <div class="xs-stats">
+        <div class="xs-stat"><span>Toplam müşteri</span><b>@Model.TotalCustomers.ToString("N0", tr)</b></div>
+        <div class="xs-stat">
+            <span>Birden fazla ürünü olan</span>
+            <b>@Model.MultiProductCustomers.ToString("N0", tr)</b>
+            <small>müşterilerin %@Pct(Model.MultiProductCustomers)</small>
+        </div>
+        <div class="xs-stat"><span>Müşteri başına ürün</span><b>@Model.AveragePerCustomer.ToString("0.0", tr)</b></div>
+        <div class="xs-stat">
+            <span>En çok satılan ikili</span>
+            <b class="txt">@string.Join(" + ", topPair.Products)</b>
+            <small>@topPair.Customers.ToString("N0", tr) müşteri</small>
+        </div>
+        <div class="xs-stat">
+            <span>En çok satılan üçlü</span>
+            <b class="txt">@string.Join(" + ", topTriple.Products)</b>
+            <small>@topTriple.Customers.ToString("N0", tr) müşteri</small>
+        </div>
+    </div>
+
+    <section class="card">
+        <h2 class="card-title">Müşteri başına ürün sayısı</h2>
+        <div class="sbar" role="img" aria-label="Müşterilerin ürün sayısına göre dağılımı">
+            @for (int i = 0; i < Model.Buckets.Count; i++)
+            {
+                <i class="sb@(i)" style="width:@(Model.Buckets[i].Percent)%" title="@Model.Buckets[i].Label: %@Model.Buckets[i].Percent"></i>
+            }
+        </div>
+        <ul class="slegend">
+            @for (int i = 0; i < Model.Buckets.Count; i++)
+            {
+                var b = Model.Buckets[i];
+                <li><span class="dot sb@(i)"></span>@b.Label: <b>@((int)Math.Round(Model.TotalCustomers * b.Percent / 100.0)) müşteri</b> <span class="muted">(%@b.Percent)</span></li>
+            }
+        </ul>
+    </section>
+
+    <div class="xs-cols">
+        <section class="card">
+            <h2 class="card-title">İkili kombinasyonlar <span class="muted">tümü, çoktan aza</span></h2>
+            <ol class="combos-list">
+                @for (int i = 0; i < Model.Pairs.Count; i++)
+                {
+                    var r = Model.Pairs[i];
+                    var w = (int)(r.Customers * 100.0 / maxPair);
+                    <li>
+                        <span class="rk">@(i + 1)</span>
+                        <div class="cmain">
+                            <div class="cnames">
+                                @for (int k = 0; k < r.Products.Length; k++)
+                                {
+                                    if (k > 0) { <span class="plus">+</span> }
+                                    <span class="pchip"><i style="background:@UiHelpers.ProductColor(r.Products[k])"></i>@r.Products[k]</span>
+                                }
+                            </div>
+                            <div class="cbarrow">
+                                <div class="pbar"><i style="width:@(w)%"></i></div>
+                                <span class="cnum"><b>@r.Customers.ToString("N0", tr)</b> müşteri · %@Pct(r.Customers)</span>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ol>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">Üçlü kombinasyonlar <span class="muted">en çok satılan 10</span></h2>
+            <ol class="combos-list">
+                @for (int i = 0; i < Model.Triples.Count; i++)
+                {
+                    var r = Model.Triples[i];
+                    var w = (int)(r.Customers * 100.0 / maxTriple);
+                    <li>
+                        <span class="rk">@(i + 1)</span>
+                        <div class="cmain">
+                            <div class="cnames">
+                                @for (int k = 0; k < r.Products.Length; k++)
+                                {
+                                    if (k > 0) { <span class="plus">+</span> }
+                                    <span class="pchip"><i style="background:@UiHelpers.ProductColor(r.Products[k])"></i>@r.Products[k]</span>
+                                }
+                            </div>
+                            <div class="cbarrow">
+                                <div class="pbar"><i style="width:@(w)%"></i></div>
+                                <span class="cnum"><b>@r.Customers.ToString("N0", tr)</b> müşteri · %@Pct(r.Customers)</span>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ol>
+        </section>
+    </div>
+
+    <p class="footnote">Oranlar acentenin tüm müşterilerine göredir. Bir müşteri, sahip olduğu her ikili ve üçlü kombinasyonda ayrı sayılır (örneğin üç ürünü olan müşteri üç ikilide ve bir üçlüde görünür).</p>
+</div>

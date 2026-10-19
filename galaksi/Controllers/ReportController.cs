@@ -12,6 +12,12 @@ public class ReportController(IPortalData data) : Controller
         var report = data.GetReport(id);
         if (report is null) return NotFound();
         ViewData["Report"] = report;
-        return View(data.GetMonthlySummary());
+
+        return id switch
+        {
+            "uretim" => View("Monthly", data.GetMonthlyReport()),
+            "capraz-satis" => View("CrossSell", data.GetCrossSellReport()),
+            _ => View(data.GetMonthlySummary())
+        };
     }
 }

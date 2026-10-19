@@ -1,0 +1,23 @@
+﻿@model MonthDetail
+@{
+    var tr = new System.Globalization.CultureInfo("tr-TR");
+    var max = Model.Products.Max(p => p.Count);
+}
+<div class="md-left">
+    <div class="stat-grid">
+        <div class="stat"><span>Poliçe başına ort. prim</span><b>@UiHelpers.Money(Math.Round(Model.Premium / Model.Policies))</b></div>
+        <div class="stat"><span>İptal edilen poliçe</span><b>@Model.Cancelled.ToString("N0", tr)</b></div>
+        <div class="stat"><span>Yeni müşteri</span><b>@Model.NewCustomers.ToString("N0", tr)</b></div>
+    </div>
+</div>
+<div class="md-right">
+    <h3 class="sub-h">Ürün dağılımı</h3>
+    @foreach (var p in Model.Products)
+    {
+        <div class="prod">
+            <span>@p.Name</span>
+            <div class="pbar"><i style="width:@((int)(p.Count * 100.0 / max))%;background:@p.Color"></i></div>
+            <b>@p.Count.ToString("N0", tr) <small>%@((int)Math.Round(p.Count * 100.0 / Model.Policies))</small></b>
+        </div>
+    }
+</div>
